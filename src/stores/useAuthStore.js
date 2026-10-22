@@ -3,6 +3,7 @@ import api from '@/lib/api';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
+  token: typeof window !== 'undefined' ? localStorage.getItem('nexchat_token') : null,
   isAuthenticated: false,
   isLoading: true,
   error: null,
@@ -11,13 +12,54 @@ export const useAuthStore = create((set, get) => ({
   authError: null,
 
   checkAuth: async () => {
+    // If in browser and no token is stored, user is not logged in.
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('nexchat_token');
+      if (!storedToken) {
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          authChecked: true,
+          authError: null,
+        });
+        return null;
+      }
+    }
+
     set({ isLoading: true, error: null });
     try {
       const data = await api.get('/auth/me');
       const user = data.user || data;
-      set({ user, isAuthenticated: !!user, isLoading: false, authChecked: true, authError: null });
+      set({
+        user,
+        isAuthenticated: !!user,
+        isLoading: false,
+        authChecked: true,
+        authError: null,
+      });
       return user;
     } catch (err) {
+      if (err.status === 401) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('nexchat_token');
+          } catch {
+            // ignore
+          }
+        }
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          authChecked: true,
+          authError: null,
+        });
+        return null;
+      }
+
       const isConnectionIssue = err?.isNetworkError || err?.isOffline || err?.isDatabaseDown;
       set((state) => ({
         user: isConnectionIssue ? state.user : null,
@@ -39,8 +81,18 @@ export const useAuthStore = create((set, get) => ({
         password,
       });
       const user = data.user || data;
-      set({ user, isAuthenticated: true, isLoading: false });
-      return { success: true, user };
+      const token = data.token;
+
+      if (token && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('nexchat_token', token);
+        } catch {
+          // ignore
+        }
+      }
+
+      set({ user, token: token || null, isAuthenticated: true, isLoading: false, authChecked: true });
+      return { success: true, user, token };
     } catch (err) {
       set({ isLoading: false, error: err.message });
       throw err;
@@ -52,8 +104,18 @@ export const useAuthStore = create((set, get) => ({
     try {
       const data = await api.post('/auth/register', formData);
       const user = data.user || data;
-      set({ user, isAuthenticated: true, isLoading: false });
-      return { success: true, user };
+      const token = data.token;
+
+      if (token && typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('nexchat_token', token);
+        } catch {
+          // ignore
+        }
+      }
+
+      set({ user, token: token || null, isAuthenticated: true, isLoading: false, authChecked: true });
+      return { success: true, user, token };
     } catch (err) {
       set({ isLoading: false, error: err.message });
       throw err;
@@ -66,7 +128,14 @@ export const useAuthStore = create((set, get) => ({
     } catch {
       // Continue cleanup on failure
     } finally {
-      set({ user: null, isAuthenticated: false, isLoading: false, error: null });
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('nexchat_token');
+        } catch {
+          // ignore
+        }
+      }
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false, error: null });
     }
   },
 

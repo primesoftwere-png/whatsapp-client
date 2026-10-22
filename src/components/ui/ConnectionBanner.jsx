@@ -1,17 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useUIStore } from '@/stores/useUIStore';
 import { useSocketStore } from '@/stores/useSocketStore';
 import { useChatStore } from '@/stores/useChatStore';
+import { getApiBaseUrl } from '@/lib/api';
 import { WifiOff, Database, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ConnectionBanner() {
+  const pathname = usePathname();
   const { isOnline, isDatabaseDown, networkError, setIsOnline, setIsDatabaseDown, setNetworkError } =
     useUIStore();
   const [isRetrying, setIsRetrying] = useState(false);
   const [showRestoredToast, setShowRestoredToast] = useState(false);
+
+  // Do not show the persistent banner on unauthenticated public marketing/auth pages
+  const isPublicPage =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password';
 
   useEffect(() => {
     const handleOnline = () => {
@@ -30,29 +40,27 @@ export default function ConnectionBanner() {
         chatStore.fetchMessages(currentActiveId);
       }
 
-      toast.success('Connection restored! You are back online.', {
-        icon: '⚡',
-        duration: 3000,
-      });
-
       const timer = setTimeout(() => setShowRestoredToast(false), 3000);
       return () => clearTimeout(timer);
     };
 
     const handleOffline = () => {
-      setIsOnline(false);
-      toast.error('You are currently offline. Check your internet connection.', {
-        icon: '📡',
-        duration: 4000,
-      });
+      // Only trigger if browser explicitly reports navigator.onLine is false
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        setIsOnline(false);
+      }
     };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial check on mount
+    // Initial check on mount - never assume offline if navigator reports true
     if (typeof navigator !== 'undefined') {
-      setIsOnline(navigator.onLine);
+      if (navigator.onLine === false) {
+        setIsOnline(false);
+      } else {
+        setIsOnline(true);
+      }
     }
 
     return () => {
@@ -63,28 +71,47 @@ export default function ConnectionBanner() {
 
   const handleRetry = async () => {
     setIsRetrying(true);
+    // Optimistically restore online status
+    setIsOnline(true);
+    setNetworkError(null);
+
     try {
-      if (typeof navigator !== 'undefined') {
-        setIsOnline(navigator.onLine);
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/health`).catch(() => null);
+
+      if (res && res.ok) {
+        setIsOnline(true);
+        setIsDatabaseDown(false);
+        setNetworkError(null);
+
+        const socketStore = useSocketStore.getState();
+        socketStore.connect();
+
+        const chatStore = useChatStore.getState();
+        chatStore.fetchConversations();
+
+        toast.success('Reconnected to messaging server');
+        return;
       }
 
-      const chatStore = useChatStore.getState();
-      await chatStore.fetchConversations();
-
-      const currentActiveId = chatStore.activeConversation?._id || chatStore.activeConversation?.id;
-      if (currentActiveId) {
-        await chatStore.fetchMessages(currentActiveId);
+      // If health check gave a response but degraded db
+      if (res && res.status === 503) {
+        setIsDatabaseDown(true);
       }
-
-      setIsDatabaseDown(false);
-      setNetworkError(null);
-      toast.success('Successfully reconnected to server');
     } catch {
-      toast.error('Still unable to connect. Retrying in background...');
+      // Keep optimistic online if user's browser is online
+      if (typeof navigator !== 'undefined' && navigator.onLine !== false) {
+        setIsOnline(true);
+      }
     } finally {
       setIsRetrying(false);
     }
   };
+
+  // If on public pages, do not render the banner
+  if (isPublicPage) {
+    return null;
+  }
 
   if (isOnline && !isDatabaseDown && !networkError && !showRestoredToast) {
     return null;
@@ -100,7 +127,7 @@ export default function ConnectionBanner() {
     );
   }
 
-  // 2. Offline Indicator
+  // 2. Offline Indicator (Only if device is genuinely disconnected from the internet)
   if (!isOnline) {
     return (
       <div className="bg-rose-600 text-white text-xs font-semibold py-2 px-4 flex items-center justify-between gap-3 select-none animate-fade-in shadow-md z-50">
@@ -112,7 +139,7 @@ export default function ConnectionBanner() {
           type="button"
           onClick={handleRetry}
           disabled={isRetrying}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? 'Checking...' : 'Retry'}</span>
@@ -133,7 +160,7 @@ export default function ConnectionBanner() {
           type="button"
           onClick={handleRetry}
           disabled={isRetrying}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? 'Connecting...' : 'Reconnect'}</span>
@@ -154,7 +181,7 @@ export default function ConnectionBanner() {
           type="button"
           onClick={handleRetry}
           disabled={isRetrying}
-          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-white text-xs font-medium transition-colors cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
           <span>{isRetrying ? 'Retrying...' : 'Retry'}</span>

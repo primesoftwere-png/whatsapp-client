@@ -190,7 +190,7 @@ export default function ConversationList() {
       </div>
 
       {/* Conversation Items List */}
-      <div onScroll={handleScroll} className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div onScroll={handleScroll} className="flex-1 overflow-y-auto p-2 pb-20 md:pb-2 space-y-1">
         {isLoadingConversations && conversations.length === 0 ? (
           <div className="space-y-2 p-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (

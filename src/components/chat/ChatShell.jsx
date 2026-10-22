@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/useAuthStore';
 import Sidebar from '@/components/chat/Sidebar';
 import ConversationList from '@/components/chat/ConversationList';
+import BottomNav from '@/components/chat/BottomNav';
 import Spinner from '@/components/ui/Spinner';
 
 export default function ChatShell({ children }) {
@@ -47,7 +48,7 @@ export default function ChatShell({ children }) {
             <button
               type="button"
               onClick={() => checkAuth()}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs cursor-pointer"
             >
               Try Again
             </button>
@@ -55,12 +56,12 @@ export default function ChatShell({ children }) {
         </div>
       )}
 
-      {/* 1. Left Nav Sidebar - Hidden on mobile if viewing a specific chat */}
-      <div className={`${isSpecificChat ? 'hidden md:flex' : 'flex'}`}>
+      {/* 1. Left Nav Sidebar - Hidden on mobile view, shown on desktop (md:flex) */}
+      <div className="hidden md:flex">
         <Sidebar />
       </div>
 
-      {/* 2. Middle Panel: Conversation List - Shown on /chats or on desktop */}
+      {/* 2. Middle Panel: Conversation List - Takes full width on mobile /chats, hidden on specific chat or contacts/settings */}
       <div
         className={`w-full md:w-80 lg:w-96 shrink-0 h-full ${
           isSpecificChat || isContactsOrSettings ? 'hidden md:flex' : 'flex'
@@ -77,6 +78,9 @@ export default function ChatShell({ children }) {
       >
         {children}
       </main>
+
+      {/* 4. Mobile Bottom Navigation Bar (Hidden on md screens & during active chats) */}
+      <BottomNav />
     </div>
   );
 }

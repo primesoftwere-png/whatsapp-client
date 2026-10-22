@@ -200,17 +200,17 @@ export default function SettingsPage() {
       </div>
 
       {/* Main Content with Nav Pills */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
         <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Settings Navigation List */}
-          <div className="space-y-1">
+          {/* Settings Navigation List - Horizontal scroll on mobile, vertical stack on desktop */}
+          <div className="flex md:flex-col overflow-x-auto no-scrollbar gap-1.5 pb-2 md:pb-0 md:space-y-1 shrink-0">
             {sections.map((sec) => {
               const Icon = sec.icon;
               return (
                 <button
                   key={sec.id}
                   onClick={() => setActiveSection(sec.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left ${
+                  className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap text-left shrink-0 ${
                     activeSection === sec.id
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 hover:text-zinc-900 dark:hover:text-zinc-100'

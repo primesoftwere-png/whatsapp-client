@@ -1,23 +1,48 @@
 import { io } from 'socket.io-client';
+import { getStoredToken } from './api';
 
 let socket = null;
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+export const getSocketBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const isLive = hostname !== 'localhost' && hostname !== '127.0.0.1';
+    if (isLive && (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return 'https://whatsapp-clone-1nlb.onrender.com';
+    }
+  }
+  return envUrl || 'http://localhost:5000';
+};
 
 export const getSocket = () => socket;
 
 export const connectSocket = () => {
+  const token = getStoredToken();
+  const socketUrl = getSocketBaseUrl();
+
   if (socket && socket.connected) {
     return socket;
   }
 
   if (socket) {
+    if (token) {
+      socket.auth = { token };
+    }
     socket.connect();
     return socket;
   }
 
-  socket = io(SOCKET_URL, {
+  socket = io(socketUrl, {
     withCredentials: true,
+    auth: {
+      token: token || '',
+    },
+    extraHeaders: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {},
     autoConnect: true,
     transports: ['websocket', 'polling'],
     reconnection: true,

@@ -183,7 +183,7 @@ export default function ContactsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
         <div className="max-w-4xl mx-auto">
           {/* TAB 1: MY CONTACTS */}
           {activeTab === 'contacts' && (
