@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { connectSocket, disconnectSocket, getSocket } from '@/lib/socket';
 import { useChatStore } from './useChatStore';
 import { useCallStore } from './useCallStore';
+import { useStatusStore } from './useStatusStore';
 import toast from 'react-hot-toast';
 
 const typingTimers = new Map();
@@ -230,6 +231,19 @@ export const useSocketStore = create((set, get) => ({
     socket.on('call:unavailable', () => {
       toast('User is offline and cannot be reached', { icon: '📞' });
       useCallStore.getState().cleanup();
+    });
+
+    // Real-time Status updates
+    socket.on('status:new', (newStatus) => {
+      useStatusStore.getState().handleSocketNewStatus(newStatus);
+    });
+
+    socket.on('status:deleted', ({ statusId }) => {
+      useStatusStore.getState().handleSocketDeleteStatus({ statusId });
+    });
+
+    socket.on('status:liked', ({ statusId, likes }) => {
+      useStatusStore.getState().handleSocketLikeStatus({ statusId, likes });
     });
   },
 

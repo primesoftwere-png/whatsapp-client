@@ -22,8 +22,13 @@ export const useUIStore = create((set, get) => ({
   },
 
   toggleTheme: () => {
-    const current = get().theme;
-    const next = current === 'dark' ? 'light' : 'dark';
+    let isCurrentlyDark = false;
+    if (typeof window !== 'undefined') {
+      isCurrentlyDark = document.documentElement.classList.contains('dark');
+    } else {
+      isCurrentlyDark = get().theme === 'dark';
+    }
+    const next = isCurrentlyDark ? 'light' : 'dark';
     get().setTheme(next);
   },
 

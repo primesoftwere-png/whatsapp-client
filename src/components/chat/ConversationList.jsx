@@ -136,7 +136,7 @@ export default function ConversationList() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 select-none">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-zinc-900 md:border-r border-zinc-200 dark:border-zinc-800 select-none">
       {/* Header */}
       <div className="p-4 pb-3 flex items-center justify-between">
         <div>

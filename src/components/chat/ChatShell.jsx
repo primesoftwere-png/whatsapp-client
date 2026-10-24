@@ -25,7 +25,10 @@ export default function ChatShell({ children }) {
   const cleanPath = (pathname || '').replace(/\/$/, '') || '/';
   const isChatsRoot = cleanPath === '/chats';
   const isSpecificChat = cleanPath.startsWith('/chats/') && cleanPath !== '/chats';
-  const isContactsOrSettings = cleanPath.startsWith('/contacts') || cleanPath.startsWith('/settings');
+  const isSubpage =
+    cleanPath.startsWith('/contacts') ||
+    cleanPath.startsWith('/settings') ||
+    cleanPath.startsWith('/status');
 
   return (
     <div className="relative flex h-screen h-[100dvh] w-full max-w-[100vw] overflow-hidden bg-white dark:bg-zinc-950">
@@ -65,7 +68,7 @@ export default function ChatShell({ children }) {
       {/* 2. Middle Panel: Conversation List - Takes full width on mobile /chats, hidden on specific chat or contacts/settings */}
       <div
         className={`w-full md:w-80 lg:w-96 shrink-0 h-full ${
-          isSpecificChat || isContactsOrSettings ? 'hidden md:flex' : 'flex'
+          isSpecificChat || isSubpage ? 'hidden md:flex' : 'flex flex-col'
         }`}
       >
         <ConversationList />

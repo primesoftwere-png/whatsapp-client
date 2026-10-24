@@ -1,10 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MessageSquare, Users, Settings, Sun, Moon, LogOut, MessageCircleCode } from 'lucide-react';
+import { MessageSquare, CircleDashed, Users, Settings, LogOut, MessageCircleCode } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { useUIStore } from '@/stores/useUIStore';
 import { useChatStore } from '@/stores/useChatStore';
 import Avatar from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
@@ -13,7 +13,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useUIStore();
   const conversations = useChatStore((state) => state.conversations);
   const totalUnread = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
@@ -33,6 +32,12 @@ export default function Sidebar() {
       href: '/chats',
       icon: MessageSquare,
       isActive: pathname.startsWith('/chats'),
+    },
+    {
+      name: 'Status',
+      href: '/status',
+      icon: CircleDashed,
+      isActive: pathname.startsWith('/status'),
     },
     {
       name: 'Contacts',
@@ -100,16 +105,6 @@ export default function Sidebar() {
 
       {/* Bottom Actions */}
       <div className="flex flex-col items-center gap-3">
-        {/* Theme Toggle */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="p-2.5 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
-          title={`Theme: ${theme}`}
-        >
-          {theme === 'dark' ? <Moon className="w-5 h-5 text-emerald-400" /> : <Sun className="w-5 h-5 text-amber-400" />}
-        </button>
-
         {/* User Avatar */}
         <Link
           href="/settings"

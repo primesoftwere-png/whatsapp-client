@@ -26,10 +26,23 @@ import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
   const { user, updateProfile, updateAvatar, updatePrivacy } = useAuthStore();
-  const { theme, setTheme } = useUIStore();
+  const { theme, setTheme, toggleTheme } = useUIStore();
   const { blockedUsers, fetchBlockedUsers, unblockUser, isLoadingBlocks } = useContactStore();
 
-  const [activeSection, setActiveSection] = useState('profile'); // profile, privacy, appearance, security, blocked
+  const [activeSection, setActiveSection] = useState('profile'); // profile, appearance, privacy, security, blocked
+  const [isDarkState, setIsDarkState] = useState(false);
+
+  useEffect(() => {
+    const updateDark = () => {
+      if (typeof document !== 'undefined') {
+        setIsDarkState(document.documentElement.classList.contains('dark'));
+      }
+    };
+    updateDark();
+    const observer = new MutationObserver(updateDark);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, [theme]);
 
   // Profile Form state
   const [profileData, setProfileData] = useState({
@@ -178,8 +191,8 @@ export default function SettingsPage() {
 
   const sections = [
     { id: 'profile', label: 'My Profile', icon: User },
+    { id: 'appearance', label: 'Theme & Appearance', icon: Palette },
     { id: 'privacy', label: 'Privacy & Discretion', icon: Shield },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'security', label: 'Security & Password', icon: KeyRound },
     { id: 'blocked', label: 'Blocked Accounts', icon: UserX },
   ];
@@ -188,14 +201,36 @@ export default function SettingsPage() {
     <div className="flex-1 flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950 overflow-hidden">
       {/* Top Header */}
       <div className="p-6 pb-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
-            <Settings className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            Settings
-          </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Personalize your profile, privacy preferences, and theme
-          </p>
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
+              <Settings className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              Settings
+            </h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Personalize your profile, privacy preferences, and theme
+            </p>
+          </div>
+
+          {/* Quick Theme Toggle Button in Settings */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 transition-all text-xs font-bold shadow-xs active:scale-95 cursor-pointer"
+            title="Switch Dark / Light theme"
+          >
+            {isDarkState ? (
+              <>
+                <Moon className="w-4 h-4 text-emerald-400" />
+                <span>Dark Mode</span>
+              </>
+            ) : (
+              <>
+                <Sun className="w-4 h-4 text-amber-500" />
+                <span>Light Mode</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useUIStore } from '@/stores/useUIStore';
 import { useSocketStore } from '@/stores/useSocketStore';
@@ -9,7 +9,7 @@ import { getApiBaseUrl } from '@/lib/api';
 import { WifiOff, Database, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function ConnectionBanner() {
+function ConnectionBannerContent() {
   const pathname = usePathname();
   const { isOnline, isDatabaseDown, networkError, setIsOnline, setIsDatabaseDown, setNetworkError } =
     useUIStore();
@@ -190,4 +190,12 @@ export default function ConnectionBanner() {
   }
 
   return null;
+}
+
+export default function ConnectionBanner() {
+  return (
+    <Suspense fallback={null}>
+      <ConnectionBannerContent />
+    </Suspense>
+  );
 }
