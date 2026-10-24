@@ -22,20 +22,22 @@ export default function BottomNav() {
     ? requests.filter((r) => r.status === 'pending').length
     : 0;
 
+  const cleanPath = (pathname || '').replace(/\/$/, '') || '/';
+  const isSpecificChat = cleanPath.startsWith('/chats/') && cleanPath !== '/chats';
+
   // Hide bottom navigation when inside a specific active conversation
-  const isSpecificChat = pathname.startsWith('/chats/') && pathname !== '/chats';
   if (isSpecificChat) {
     return null;
   }
 
-  const isChats = pathname.startsWith('/chats');
-  const isContacts = pathname.startsWith('/contacts');
-  const isSettings = pathname.startsWith('/settings');
+  const isChats = cleanPath === '/chats';
+  const isContacts = cleanPath.startsWith('/contacts');
+  const isSettings = cleanPath.startsWith('/settings');
 
   return (
     <nav
       aria-label="Mobile Navigation"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] px-3 py-1.5 flex items-center justify-around select-none"
+      className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-t border-zinc-200/80 dark:border-zinc-800 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] px-3 py-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] flex items-center justify-around select-none"
     >
       {/* 1. CHATS TAB */}
       <Link

@@ -32,32 +32,32 @@ export default function LandingPage() {
 
       {/* Navigation */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-[#0c0c11]/70 border-b border-zinc-200/60 dark:border-zinc-800/60">
-        <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/30 group-hover:scale-105 transition-transform">
               <MessageCircleCode className="w-5 h-5" />
             </div>
-            <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-zinc-900 via-emerald-900 to-emerald-600 dark:from-white dark:via-zinc-200 dark:to-emerald-400 bg-clip-text text-transparent">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-zinc-900 via-emerald-900 to-emerald-600 dark:from-white dark:via-zinc-200 dark:to-emerald-400 bg-clip-text text-transparent">
               NexChat
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isAuthenticated ? (
               <Link href="/chats">
-                <Button variant="primary" icon={ArrowRight}>
+                <Button variant="primary" size="sm" icon={ArrowRight} className="text-xs sm:text-sm">
                   Open NexChat
                 </Button>
               </Link>
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="font-medium text-sm">
+                  <Button variant="ghost" size="sm" className="font-medium text-xs sm:text-sm px-2.5 sm:px-4">
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button variant="primary" className="font-medium text-sm">
+                  <Button variant="primary" size="sm" className="font-medium text-xs sm:text-sm px-3 sm:px-4 whitespace-nowrap">
                     Get Started Free
                   </Button>
                 </Link>

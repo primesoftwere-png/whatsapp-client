@@ -33,7 +33,7 @@ export const useUIStore = create((set, get) => ({
   setIsMobile: (isMobile) => set({ isMobile }),
 
   // Network & Database status
-  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+  isOnline: true,
   isDatabaseDown: false,
   networkError: null,
   setIsOnline: (isOnline) => set({ isOnline }),

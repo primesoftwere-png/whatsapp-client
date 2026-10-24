@@ -75,9 +75,9 @@ export default function ActiveChatPage({ params: paramsPromise }) {
   }, [conversationId, conversations, activeConversation, setActiveConversation]);
 
   const handleSendMessage = async (payload) => {
+    setReplyingTo(null);
     try {
       await sendMessage(conversationId, payload);
-      setReplyingTo(null);
     } catch {
       toast.error('Failed to send message');
     }

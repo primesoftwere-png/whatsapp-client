@@ -32,6 +32,7 @@ export default function MessageComposer({
   const { emitTyping } = useSocketStore();
   const { theme } = useUIStore();
   const typingTimeoutRef = useRef(null);
+  const lastTypingEmittedRef = useRef(0);
 
   // Close emoji picker on outside click
   useEffect(() => {
@@ -64,13 +65,14 @@ export default function MessageComposer({
         clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = null;
       }
+      lastTypingEmittedRef.current = 0;
       if (conversationId) {
         emitTyping(conversationId, false);
       }
     };
   }, [conversationId, emitTyping]);
 
-  // Emit typing indicator with debounce and immediate stop on empty input
+  // Emit typing indicator with throttle and immediate stop on empty input
   const handleInputChange = (e) => {
     const val = e.target.value;
     setContent(val);
@@ -81,13 +83,19 @@ export default function MessageComposer({
     }
 
     if (val.trim().length > 0) {
-      emitTyping(conversationId, true);
+      const now = Date.now();
+      if (now - lastTypingEmittedRef.current > 2000) {
+        emitTyping(conversationId, true);
+        lastTypingEmittedRef.current = now;
+      }
       typingTimeoutRef.current = setTimeout(() => {
         emitTyping(conversationId, false);
+        lastTypingEmittedRef.current = 0;
       }, 1500);
     } else {
       // Stopped typing immediately when content is cleared
       emitTyping(conversationId, false);
+      lastTypingEmittedRef.current = 0;
     }
   };
 
@@ -156,20 +164,22 @@ export default function MessageComposer({
   };
 
   const handleSend = () => {
-    const trimmed = content.trim();
+    const trimmed = (content || textareaRef.current?.value || '').trim();
     if (!trimmed && attachments.length === 0) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
     }
+    lastTypingEmittedRef.current = 0;
     emitTyping(conversationId, false);
 
-    onSendMessage({
+    const payload = {
       content: trimmed,
       attachments,
       replyTo: replyingTo?._id || replyingTo?.id,
-    });
+      replyToMessage: replyingTo,
+    };
 
     setContent('');
     setAttachments([]);
@@ -178,7 +188,10 @@ export default function MessageComposer({
 
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+      textareaRef.current.focus();
     }
+
+    onSendMessage(payload);
   };
 
   const handleKeyDown = (e) => {
@@ -300,8 +313,9 @@ export default function MessageComposer({
         <button
           type="button"
           onClick={handleSend}
+          onMouseDown={(e) => e.preventDefault()}
           disabled={!content.trim() && attachments.length === 0}
-          className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white disabled:text-zinc-500 disabled:cursor-not-allowed transition-all duration-150 shadow-xs hover:shadow-emerald-500/25 active:scale-95"
+          className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white disabled:text-zinc-500 disabled:cursor-not-allowed transition-all duration-150 shadow-xs hover:shadow-emerald-500/25 active:scale-95 cursor-pointer"
           title="Send message (Enter)"
         >
           <Send className="w-4 h-4" />

@@ -49,7 +49,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-16 md:w-18 flex flex-col items-center justify-between py-4 bg-zinc-900 text-zinc-300 border-r border-zinc-800 z-30 select-none shrink-0 h-full">
+    <aside className="hidden md:flex w-16 md:w-18 flex-col items-center justify-between py-4 bg-zinc-900 text-zinc-300 border-r border-zinc-800 z-30 select-none shrink-0 h-full">
       {/* Top Logo */}
       <div className="flex flex-col items-center gap-6">
         <Link

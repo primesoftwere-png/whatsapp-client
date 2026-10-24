@@ -163,13 +163,60 @@ export const useChatStore = create((set, get) => ({
   },
 
   sendMessage: async (conversationId, payload) => {
+    const clientMessageId =
+      payload.clientMessageId ||
+      `client_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const currentUser = useAuthStore.getState().user;
+
+    // Build optimistic message for instant, smooth UI response
+    const optimisticMessage = {
+      _id: clientMessageId,
+      id: clientMessageId,
+      clientMessageId,
+      conversation: conversationId,
+      conversationId: conversationId,
+      content: payload.content || '',
+      type:
+        payload.type ||
+        (payload.attachments && payload.attachments.length > 0
+          ? payload.attachments[0].type?.startsWith('image')
+            ? 'image'
+            : 'file'
+          : 'text'),
+      attachments: payload.attachments || [],
+      replyTo: payload.replyToMessage || (payload.replyTo ? { _id: payload.replyTo } : null),
+      sender: currentUser || { name: 'You' },
+      status: 'sent',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // 1. Immediately render the message in the conversation
+    get().addMessage(optimisticMessage);
+
+    // 2. Send to backend in background
     try {
-      const data = await api.post(`/messages/conversations/${conversationId}/messages`, payload);
+      const sendBody = {
+        content: payload.content || '',
+        type: payload.type,
+        attachments: payload.attachments,
+        replyTo: payload.replyTo,
+        clientMessageId,
+      };
+
+      const data = await api.post(`/messages/conversations/${conversationId}/messages`, sendBody);
       const newMessage = data.message || data;
-      get().addMessage(newMessage);
+      get().addMessage({ ...newMessage, clientMessageId });
       return newMessage;
     } catch (err) {
       console.error('Failed to send message:', err);
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          (m.clientMessageId && m.clientMessageId === clientMessageId) || m._id === clientMessageId
+            ? { ...m, status: 'failed' }
+            : m
+        ),
+      }));
       throw err;
     }
   },

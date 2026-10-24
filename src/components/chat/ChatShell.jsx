@@ -21,13 +21,14 @@ export default function ChatShell({ children }) {
     }
   }, [authChecked, isLoading, isAuthenticated, authError, router]);
 
-  // Determine visibility states for mobile
-  const isChatsRoot = pathname === '/chats';
-  const isSpecificChat = pathname.startsWith('/chats/') && pathname !== '/chats';
-  const isContactsOrSettings = pathname.startsWith('/contacts') || pathname.startsWith('/settings');
+  // Determine visibility states for mobile using sanitized path
+  const cleanPath = (pathname || '').replace(/\/$/, '') || '/';
+  const isChatsRoot = cleanPath === '/chats';
+  const isSpecificChat = cleanPath.startsWith('/chats/') && cleanPath !== '/chats';
+  const isContactsOrSettings = cleanPath.startsWith('/contacts') || cleanPath.startsWith('/settings');
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-white dark:bg-zinc-950">
+    <div className="relative flex h-screen h-[100dvh] w-full max-w-[100vw] overflow-hidden bg-white dark:bg-zinc-950">
       {/* Full screen loader while checking authentication */}
       {isLoading && !authChecked && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white dark:bg-[#0c0c11]">
@@ -57,7 +58,7 @@ export default function ChatShell({ children }) {
       )}
 
       {/* 1. Left Nav Sidebar - Hidden on mobile view, shown on desktop (md:flex) */}
-      <div className="hidden md:flex">
+      <div className="hidden md:flex h-full shrink-0">
         <Sidebar />
       </div>
 

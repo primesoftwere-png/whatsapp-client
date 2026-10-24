@@ -16,7 +16,7 @@ export default function ConnectionBanner() {
   const [isRetrying, setIsRetrying] = useState(false);
   const [showRestoredToast, setShowRestoredToast] = useState(false);
 
-  // Do not show the persistent banner on unauthenticated public marketing/auth pages
+  // Determine if this is a public landing or auth page using Next.js pathname
   const isPublicPage =
     pathname === '/' ||
     pathname === '/login' ||
@@ -29,7 +29,6 @@ export default function ConnectionBanner() {
       setNetworkError(null);
       setShowRestoredToast(true);
 
-      // Reconnect socket and refresh current state
       const socketStore = useSocketStore.getState();
       socketStore.connect();
 
@@ -45,7 +44,6 @@ export default function ConnectionBanner() {
     };
 
     const handleOffline = () => {
-      // Only trigger if browser explicitly reports navigator.onLine is false
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         setIsOnline(false);
       }
@@ -54,7 +52,7 @@ export default function ConnectionBanner() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initial check on mount - never assume offline if navigator reports true
+    // Initial check on mount - only mark offline if browser genuinely reports false
     if (typeof navigator !== 'undefined') {
       if (navigator.onLine === false) {
         setIsOnline(false);
@@ -71,7 +69,6 @@ export default function ConnectionBanner() {
 
   const handleRetry = async () => {
     setIsRetrying(true);
-    // Optimistically restore online status
     setIsOnline(true);
     setNetworkError(null);
 
@@ -94,12 +91,10 @@ export default function ConnectionBanner() {
         return;
       }
 
-      // If health check gave a response but degraded db
       if (res && res.status === 503) {
         setIsDatabaseDown(true);
       }
     } catch {
-      // Keep optimistic online if user's browser is online
       if (typeof navigator !== 'undefined' && navigator.onLine !== false) {
         setIsOnline(true);
       }
@@ -108,17 +103,21 @@ export default function ConnectionBanner() {
     }
   };
 
-  // If on public pages, do not render the banner
+  // Do not render banner on public landing or authentication pages
   if (isPublicPage) {
     return null;
   }
 
-  if (isOnline && !isDatabaseDown && !networkError && !showRestoredToast) {
+  // A device is only considered offline if navigator explicitly reports false
+  const isActuallyOffline =
+    typeof navigator !== 'undefined' ? navigator.onLine === false : false;
+
+  if (!isActuallyOffline && !isDatabaseDown && !networkError && !showRestoredToast) {
     return null;
   }
 
   // 1. Connection Restored Indicator
-  if (showRestoredToast && isOnline && !isDatabaseDown && !networkError) {
+  if (showRestoredToast && !isActuallyOffline && !isDatabaseDown && !networkError) {
     return (
       <div className="bg-emerald-600 text-white text-xs font-semibold py-1 px-4 flex items-center justify-center gap-2 select-none animate-fade-in shadow-xs z-50">
         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -128,7 +127,7 @@ export default function ConnectionBanner() {
   }
 
   // 2. Offline Indicator (Only if device is genuinely disconnected from the internet)
-  if (!isOnline) {
+  if (isActuallyOffline) {
     return (
       <div className="bg-rose-600 text-white text-xs font-semibold py-2 px-4 flex items-center justify-between gap-3 select-none animate-fade-in shadow-md z-50">
         <div className="flex items-center gap-2">
@@ -170,7 +169,7 @@ export default function ConnectionBanner() {
   }
 
   // 4. General Network Error Indicator
-  if (networkError) {
+  if (networkError && !isActuallyOffline) {
     return (
       <div className="bg-amber-600 text-white text-xs font-semibold py-2 px-4 flex items-center justify-between gap-3 select-none animate-fade-in shadow-md z-50">
         <div className="flex items-center gap-2">
